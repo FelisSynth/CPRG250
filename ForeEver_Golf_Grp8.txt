@@ -1,0 +1,283 @@
+SQL> 
+SQL> --put your sql commands below
+SQL> 
+SQL> 
+SQL> set echo on
+SQL> 
+SQL> 
+SQL> --drop all tables, child tables first, then parent tables
+SQL> DROP TABLE ForeEver_Customer_Course;
+
+Table dropped.
+
+SQL> DROP TABLE ForeEver_Rewards;
+
+Table dropped.
+
+SQL> DROP TABLE fg_customerReview;
+
+Table dropped.
+
+SQL> DROP TABLE ForeEver_Reservation;
+
+Table dropped.
+
+SQL> DROP TABLE ForeEver_Credit_Cards;
+
+Table dropped.
+
+SQL> drop table fg_teeTimes;
+
+Table dropped.
+
+SQL> 
+SQL> DROP TABLE ForeEver_Customer;
+
+Table dropped.
+
+SQL> DROP TABLE ForeEver_Course_Information;
+
+Table dropped.
+
+SQL> 
+SQL> 
+SQL> 
+SQL> --create table ForeEver_Course_Information
+SQL> CREATE TABLE ForeEver_Course_Information
+  2  (
+  3  CourseName VARCHAR2(50) CONSTRAINT FE_CINFO_NAME_PK PRIMARY KEY,
+  4  city VARCHAR2(50) CONSTRAINT FE_CINFO_CITY_NN NOT NULL,
+  5  Prov VARCHAR2(50) CONSTRAINT FE_CINFO_PROV_NN NOT NULL,
+  6  PostalCode VARCHAR2(50) CONSTRAINT FE_CINFO_PCODE_NN NOT NULL,
+  7  country VARCHAR2(50) CONSTRAINT FE_CINFO_COUNTRY_NN NOT NULL,
+  8  AverageReviewRating Number(1) CONSTRAINT FE_CINFO_AVGREV_NN NOT NULL,
+  9  Description VARCHAR2(50) CONSTRAINT FE_CINFO_DESC_NN NOT NULL,
+ 10  YearBuild number(4) CONSTRAINT FE_CINFO_YB_NN NOT NULL,
+ 11  LengthInYards number CONSTRAINT FE_CINFO_LIY_NN NOT NULL,
+ 12  CONSTRAINT FE_CINFO_AVGREV_CK CHECK(AverageReviewRating >=1 AND AverageReviewRating <= 5),
+ 13  CONSTRAINT FE_CINFO_PCODE_CK CHECK(REGEXP_LIKE(PostalCode,'[A-Z]{1}[0-9]{1}[A-Z]{1}[0-9]{1}[A-Z]{1}[0-9]{1}'))
+ 14  );
+
+Table created.
+
+SQL> DESC ForeEver_Course_Information;
+ Name                                      Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ COURSENAME                                NOT NULL VARCHAR2(50)
+ CITY                                      NOT NULL VARCHAR2(50)
+ PROV                                      NOT NULL VARCHAR2(50)
+ POSTALCODE                                NOT NULL VARCHAR2(50)
+ COUNTRY                                   NOT NULL VARCHAR2(50)
+ AVERAGEREVIEWRATING                       NOT NULL NUMBER(1)
+ DESCRIPTION                               NOT NULL VARCHAR2(50)
+ YEARBUILD                                 NOT NULL NUMBER(4)
+ LENGTHINYARDS                             NOT NULL NUMBER
+
+SQL> 
+SQL> 
+SQL> 
+SQL> --create table ForeEver_Customer
+SQL> CREATE TABLE ForeEver_Customer
+  2  (
+  3  customerNumber NUMBER CONSTRAINT FE_customerNumber_PK PRIMARY KEY,
+  4  firstName VARCHAR2(25) CONSTRAINT Customer_firstName_NN NOT NULL,
+  5  lastName VARCHAR2(25) CONSTRAINT Customer_lastName_NN NOT NULL,
+  6  Email VARCHAR2(60) CONSTRAINT Customer_email_NN NOT NULL,
+  7  creditAmount  NUMBER CONSTRAINT Customer_creditAmount_NN NOT NULL,
+  8  CONSTRAINT Customer_email_CK CHECK (Email like '%_@__%.__%'),
+  9  CONSTRAINT Customer_creditAmount_CK CHECK (creditAmount >= 0)
+ 10  );
+
+Table created.
+
+SQL> 
+SQL> DESC ForeEver_Customer;
+ Name                                      Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ CUSTOMERNUMBER                            NOT NULL NUMBER
+ FIRSTNAME                                 NOT NULL VARCHAR2(25)
+ LASTNAME                                  NOT NULL VARCHAR2(25)
+ EMAIL                                     NOT NULL VARCHAR2(60)
+ CREDITAMOUNT                              NOT NULL NUMBER
+
+SQL> 
+SQL> --create table ForeEver_Customer_Course
+SQL> CREATE TABLE ForeEver_Customer_Course
+  2  (
+  3  CustomerNumber NUMBER CONSTRAINT FE_CC_CNUM_NN NOT NULL,
+  4  CourseName VARCHAR2(50) CONSTRAINT FE_CC_CNAME_NN NOT NULL,
+  5  CustomerNumber_CourseName VARCHAR2(52) CONSTRAINT FE_CC_CNCN_PK PRIMARY KEY,
+  6  CONSTRAINT FE_CC_CNUM_FK1 FOREIGN KEY(CustomerNumber) REFERENCES ForeEver_Customer(CustomerNumber),
+  7  CONSTRAINT FE_CC_CNUM_CK CHECK(CustomerNumber >= 0),
+  8  CONSTRAINT FE_CC_CNAME_FK2 FOREIGN KEY(CourseName) REFERENCES ForeEver_Course_Information(CourseName)
+  9  );
+
+Table created.
+
+SQL> 
+SQL> 
+SQL> DESC ForeEver_Customer_Course;
+ Name                                      Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ CUSTOMERNUMBER                            NOT NULL NUMBER
+ COURSENAME                                NOT NULL VARCHAR2(50)
+ CUSTOMERNUMBER_COURSENAME                 NOT NULL VARCHAR2(52)
+
+SQL> 
+SQL> 
+SQL> --create table for tee Times, use alter table commands to add constraints
+SQL> 
+SQL> CREATE TABLE fg_teeTimes
+  2  (
+  3  teeTimeId NUMBER CONSTRAINT Tee_Times_Id_PK PRIMARY KEY,
+  4  teeTimes DATE CONSTRAINT Tee_Times_Duration_NN NOT NULL,
+  5  pricePerPlayer NUMBER(6,2) CONSTRAINT Tee_Times_Price_NN NOT NULL,
+  6  cartFlag NUMBER(1) CONSTRAINT Tee_Times_Cart_Flag_NN NOT NULL,
+  7  numberOfHoles NUMBER CONSTRAINT Tee_Times_Holes_NN NOT NULL,
+  8  availableSpace NUMBER CONSTRAINT Tee_Times_Spaces_NN NOT NULL,
+  9  cartIncluded char(1) CONSTRAINT Tee_Times_Cart_Included_NN NOT NULL,
+ 10  Course_ID VARCHAR2(50)
+ 11  );
+
+Table created.
+
+SQL> 
+SQL> ALTER TABLE fg_teeTimes
+  2  add CONSTRAINT Tee_Times_Course_ID_FK FOREIGN KEY(Course_ID) REFERENCES ForeEver_Course_Information(CourseName)
+  3  add CONSTRAINT Tee_Times_Holes_CK CHECK(numberOfHoles == 9 or numberOfHoles == 18),
+  4  add CONSTRAINT Tee_Times_Price_CK CHECK(pricePerPlayer >= 0),
+  5  add CONSTRAINT Tee_Times_Cart_Included_CK CHECK(SUBSTR(Product_id,1,1) = 'Y' OR SUBSTR(Product_id,1,1) = 'N'),
+  6  add CONSTRAINT Tee_Times_Cart_Flag_CK CHECK(cartFlag == 0 OR cartFlag == 1),
+  7  add CONSTRAINT Tee_Times_Spaces_CK CHECK(availableSpace <= 4)
+  8  
+SQL> 
+SQL> DESC fg_teeTimes
+ Name                                      Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ TEETIMEID                                 NOT NULL NUMBER
+ TEETIMES                                  NOT NULL DATE
+ PRICEPERPLAYER                            NOT NULL NUMBER(6,2)
+ CARTFLAG                                  NOT NULL NUMBER(1)
+ NUMBEROFHOLES                             NOT NULL NUMBER
+ AVAILABLESPACE                            NOT NULL NUMBER
+ CARTINCLUDED                              NOT NULL CHAR(1)
+ COURSE_ID                                          VARCHAR2(50)
+
+SQL> 
+SQL> --create table ForeEver_Rewards
+SQL> CREATE TABLE ForeEver_Rewards
+  2  (
+  3  promoCode VARCHAR2(18) CONSTRAINT FE_promoCode_PK PRIMARY KEY,
+  4  isUsed NUMBER(1) CONSTRAINT Reward_Is_Used_NN NOT NULL,
+  5  issuedDate DATE CONSTRAINT Reward_Date_Issued_NN NOT NULL,
+  6  promocodeValue NUMBER(6,2) CONSTRAINT Reward_value_NN NOT NULL,
+  7  expiryDate NUMBER CONSTRAINT Reward_Expiry_Date_NN NOT NULL,
+  8  CONSTRAINT Reward_Is_Used_CK CHECK(isUsed >= 0 AND isUsed <= 1),
+  9  CONSTRAINT Reward_Expiry_Date_CK CHECK(REGEXP_LIKE(expiryDate,'[0-9]{4}') AND (expiryDate >= 1000 AND expiryDate < 1300))
+ 10  );
+
+Table created.
+
+SQL> 
+SQL> DESC ForeEver_Rewards;
+ Name                                      Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ PROMOCODE                                 NOT NULL VARCHAR2(18)
+ ISUSED                                    NOT NULL NUMBER(1)
+ ISSUEDDATE                                NOT NULL DATE
+ PROMOCODEVALUE                            NOT NULL NUMBER(6,2)
+ EXPIRYDATE                                NOT NULL NUMBER
+
+SQL> 
+SQL> --create table ForeEver_Credit_Cards
+SQL> CREATE TABLE ForeEver_Credit_Cards
+  2  (
+  3  cardNumber NUMBER CONSTRAINT Credit_Card_Number_PK PRIMARY KEY,
+  4  cardName VARCHAR2(25) CONSTRAINT Credit_Card_Name_NN NOT NULL,
+  5  expiryDate NUMBER CONSTRAINT Credit_Card_EXP_NN NOT NULL,
+  6  default_card NUMBER(1) CONSTRAINT Credit_Card_Default_NN NOT NULL,
+  7  Customer_ID NUMBER,
+  8  CONSTRAINT Credit_Card_Default_CK CHECK(default_card >= 0 AND default_card <= 1),
+  9  CONSTRAINT Credit_Card_EXP_CK CHECK(REGEXP_LIKE(expiryDate,'[0-9]{4}')),
+ 10  CONSTRAINT Credit_Card_Customer_Id_FK FOREIGN KEY(Customer_ID) REFERENCES ForeEver_Customer(customerNumber)
+ 11  );
+
+Table created.
+
+SQL> 
+SQL> DESC ForeEver_Credit_Cards;
+ Name                                      Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ CARDNUMBER                                NOT NULL NUMBER
+ CARDNAME                                  NOT NULL VARCHAR2(25)
+ EXPIRYDATE                                NOT NULL NUMBER
+ DEFAULT_CARD                              NOT NULL NUMBER(1)
+ CUSTOMER_ID                                        NUMBER
+
+SQL> 
+SQL> --create table ForeEver_Reservation
+SQL> CREATE TABLE ForeEver_Reservation
+  2  (
+  3  reservationId NUMBER CONSTRAINT Reservation_ID_PK PRIMARY KEY,
+  4  greenFees NUMBER(6,2) CONSTRAINT Reservation_Green_Fees_NN NOT NULL,
+  5  taxes NUMBER(6,2) CONSTRAINT Reservation_Tax_NN NOT NULL,
+  6  amountCharged NUMBER(6,2) CONSTRAINT Reservation_Amount_NN NOT NULL,
+  7  numberOfPlayer NUMBER CONSTRAINT Reservation_Number_Of_Player_NN NOT NULL,
+  8  Customer_ID NUMBER,
+  9  Tee_Time_ID NUMBER,
+ 10  Credit_Card_ID NUMBER,
+ 11  CONSTRAINT Reservation_Customer_Id_FK FOREIGN KEY(Customer_ID) REFERENCES ForeEver_Customer(customerNumber),
+ 12  CONSTRAINT Reservation_Tee_Time_Id_FK FOREIGN KEY(Tee_Time_ID) REFERENCES fg_teeTimes(teeTimeId),
+ 13  CONSTRAINT Reservation_Credit_Card_Id_FK FOREIGN KEY(Credit_Card_ID) REFERENCES ForeEver_Credit_Cards(cardNumber)
+ 14  );
+
+Table created.
+
+SQL> 
+SQL> DESC ForeEver_Reservation;
+ Name                                      Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ RESERVATIONID                             NOT NULL NUMBER
+ GREENFEES                                 NOT NULL NUMBER(6,2)
+ TAXES                                     NOT NULL NUMBER(6,2)
+ AMOUNTCHARGED                             NOT NULL NUMBER(6,2)
+ NUMBEROFPLAYER                            NOT NULL NUMBER
+ CUSTOMER_ID                                        NUMBER
+ TEE_TIME_ID                                        NUMBER
+ CREDIT_CARD_ID                                     NUMBER
+
+SQL> 
+SQL> 
+SQL> 
+SQL> 
+SQL> --create table fg_customerReview;
+SQL> CREATE TABLE fg_customerReview
+  2  (
+  3  reviewTitle VARCHAR2(25) CONSTRAINT customerReview_Title_PK PRIMARY KEY,
+  4  starRating NUMBER CONSTRAINT customerReview_Rating_NN NOT NULL,
+  5  reviewComments VARCHAR2(255) CONSTRAINT customerReview_Comments_NN NOT NULL,
+  6  Reservation_Id NUMBER,
+  7  CONSTRAINT customerReview_Rating_CK CHECK(REGEXP_LIKE(starRating,'[1-5]{1}')),
+  8  CONSTRAINT customerReview_Reservation_Id_FK FOREIGN KEY(Reservation_Id) REFERENCES ForeEver_Reservation(reservationId)
+  9  );
+
+Table created.
+
+SQL> 
+SQL> DESC fg_customerReview;
+ Name                                      Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ REVIEWTITLE                               NOT NULL VARCHAR2(25)
+ STARRATING                                NOT NULL NUMBER
+ REVIEWCOMMENTS                            NOT NULL VARCHAR2(255)
+ RESERVATION_ID                                     NUMBER
+
+SQL> 
+SQL> 
+SQL> 
+SQL> 
+SQL> 
+SQL> 
+SQL> 
+SQL> --sql code above
+SQL> spool off
